@@ -1,0 +1,43 @@
+{
+  "id": "Xenova/whisper-tiny",
+  "name": "Whisper (Tiny)",
+  "author": "OpenAI/Xenova",
+  "task": "automatic-speech-recognition",
+  "description": "A general-purpose speech recognition model for real-time transcription.",
+  "ui_components": {
+    "workbench_input": "/components/workbench/audio_input.html",
+    "workbench_output": "/components/workbench/text_output.html"
+  },
+  "config_files": [
+    "tokenizer_config.json",
+    "generation_config.json",
+    "preprocessor_config.json",
+    "tokenizer.json",
+    "config.json"
+  ],
+  "configurable_params": [
+    {
+      "id": "language",
+      "name": "Language",
+      "type": "select",
+      "default": "english",
+      "options": [
+        { "value": "english", "label": "English" },
+        { "value": "japanese", "label": "Japanese" }
+      ],
+      "column": 1
+    },
+    {
+      "id": "task",
+      "name": "Task",
+      "type": "select",
+      "default": "transcribe",
+      "options": [
+        { "value": "transcribe", "label": "Transcribe" },
+        { "value": "translate", "label": "Translate (to English)" }
+      ],
+      "column": 2
+    }
+  ],
+  "default_filename": "transcription.txt"
+}

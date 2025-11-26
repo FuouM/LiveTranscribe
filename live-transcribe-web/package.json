@@ -1,0 +1,23 @@
+{
+  "name": "live-transcribe-web",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run copy-wasm && vite",
+    "build": "npm run copy-wasm && vite build",
+    "preview": "vite preview",
+    "copy-wasm": "node scripts/copy-wasm.js"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@huggingface/hub": "^0.19.0",
+    "@huggingface/transformers": "^3.0.0",
+    "@xenova/transformers": "^2.17.2",
+    "llama-tokenizer-js": "^1.2.2",
+    "onnxruntime-web": "^1.20.0",
+    "recordrtc": "^5.6.2"
+  }
+}
