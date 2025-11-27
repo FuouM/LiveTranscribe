@@ -1,0 +1,89 @@
+/* App Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-header h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.app-content {
+  padding: 2rem;
+  background: var(--bg-primary);
+  min-height: calc(100vh - 80px);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  background: none;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+  transform: scale(1.05);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Theme icon handled by JavaScript */
+
+/* Icon Styles */
+.theme-icon-moon::before,
+.theme-icon-sun::before,
+.clipboard-icon::before,
+.checkmark-icon::before {
+  font-family: "Material Icons";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  vertical-align: text-bottom;
+}
+
+.theme-icon-moon::before {
+  content: "dark_mode";
+}
+
+.theme-icon-sun::before {
+  content: "light_mode";
+}
+
+.clipboard-icon::before {
+  content: "content_copy";
+  font-size: 18px;
+}
+
+.checkmark-icon::before {
+  content: "check";
+  color: #10b981;
+}

@@ -9,5 +9,4 @@ export const dom = {
   modelSelect: () => document.getElementById("model-select"),
   languageSelect: () => document.getElementById("language-select"),
   backendSelect: () => document.getElementById("backend-select"),
-  realtimeToggle: () => document.getElementById("realtime-toggle"),
 };

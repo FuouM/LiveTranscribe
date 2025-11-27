@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --bg-primary: #111;
+  --bg-secondary: #222;
+  --bg-tertiary: #333;
+  --text-primary: #fff;
+  --text-secondary: #ccc;
+  --text-muted: #888;
+  --accent-primary: #3b82f6;
+  --accent-danger: #ef4444;
+  --accent-warning: #ffd700;
+  --accent-error: #ff6b6b;
+  --border-color: #444;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f3f4;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --text-muted: #80868b;
+  --accent-primary: #1a73e8;
+  --accent-danger: #ea4335;
+  --accent-warning: #fbbc04;
+  --accent-error: #ea4335;
+  --border-color: #dadce0;
+}

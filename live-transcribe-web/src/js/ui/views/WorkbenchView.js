@@ -4,8 +4,6 @@ import { dom } from "../../dom.js";
 let currentTranscriptionState = {
   committed: [],
   partial: "",
-  realtime: "",
-  realtimeEnabled: true,
 };
 
 export async function initWorkbenchView() {
@@ -68,32 +66,26 @@ async function renderWorkbench() {
                     </select>
                 </div>
 
-                <div class="control-group">
-                    <label for="realtime-toggle">
-                        <input type="checkbox" id="realtime-toggle" checked>
-                        Real-time transcription
-                    </label>
-                </div>
 
                 <div class="control-group">
                     <label>Active Layers:</label>
-                    <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 5px;">
-                        <label style="font-size: 12px;">
-                            <input type="checkbox" id="layer-l1-toggle" checked>
-                            L1: Fast continuous (1s)
-                        </label>
-                        <label style="font-size: 12px;">
-                            <input type="checkbox" id="layer-l2-toggle" checked>
-                            L2: 5s chunks
-                        </label>
-                        <label style="font-size: 12px;">
-                            <input type="checkbox" id="layer-l3-toggle" checked>
-                            L3: 10s chunks
-                        </label>
-                        <label style="font-size: 12px;">
-                            <input type="checkbox" id="layer-l4-toggle" checked>
-                            L4: 20s chunks (ground truth)
-                        </label>
+                    <div class="layer-toggle-grid">
+                        <div class="layer-toggle-button">
+                            <input type="checkbox" id="layer-l1-toggle">
+                            <div class="layer-toggle-label">L1: Fast continuous (1s)</div>
+                        </div>
+                        <div class="layer-toggle-button">
+                            <input type="checkbox" id="layer-l2-toggle">
+                            <div class="layer-toggle-label">L2: 5s chunks</div>
+                        </div>
+                        <div class="layer-toggle-button">
+                            <input type="checkbox" id="layer-l3-toggle">
+                            <div class="layer-toggle-label">L3: 10s chunks</div>
+                        </div>
+                        <div class="layer-toggle-button">
+                            <input type="checkbox" id="layer-l4-toggle">
+                            <div class="layer-toggle-label">L4: 20s chunks (ground truth)</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,22 +98,7 @@ async function renderWorkbench() {
   console.log("Workbench HTML rendered successfully");
 }
 
-function subscribeToStateChanges() {
-  // Handle realtime toggle changes
-  const realtimeToggle = document.getElementById("realtime-toggle");
-  if (realtimeToggle) {
-    realtimeToggle.addEventListener("change", (e) => {
-      currentTranscriptionState.realtimeEnabled = e.target.checked;
-      // Clear realtime text if disabling
-      if (!e.target.checked) {
-        currentTranscriptionState.realtime = "";
-        renderTranscription();
-      }
-    });
-    // Initialize the state
-    currentTranscriptionState.realtimeEnabled = realtimeToggle.checked;
-  }
-}
+function subscribeToStateChanges() {}
 
 export function updateTranscription(data) {
   const { type, text } = data;
@@ -134,11 +111,6 @@ export function updateTranscription(data) {
       currentTranscriptionState.committed.push(text.trim());
     }
     currentTranscriptionState.partial = "";
-    currentTranscriptionState.realtime = "";
-  } else if (type === "realtime") {
-    if (currentTranscriptionState.realtimeEnabled) {
-      currentTranscriptionState.realtime = text;
-    }
   }
 
   renderTranscription();
@@ -159,26 +131,14 @@ function renderTranscription() {
   });
 
   // Add current transcription
-  if (currentTranscriptionState.partial || currentTranscriptionState.realtime) {
+  if (currentTranscriptionState.partial) {
     const currentDiv = document.createElement("div");
     currentDiv.className = "current-transcription";
 
-    if (currentTranscriptionState.partial) {
-      const partialSpan = document.createElement("span");
-      partialSpan.className = "sentence-partial";
-      partialSpan.textContent = `[${currentTranscriptionState.partial}]`;
-      currentDiv.appendChild(partialSpan);
-    }
-
-    if (
-      currentTranscriptionState.realtime &&
-      currentTranscriptionState.realtimeEnabled
-    ) {
-      const realtimeSpan = document.createElement("span");
-      realtimeSpan.className = "realtime-text";
-      realtimeSpan.textContent = currentTranscriptionState.realtime;
-      currentDiv.appendChild(realtimeSpan);
-    }
+    const partialSpan = document.createElement("span");
+    partialSpan.className = "sentence-partial";
+    partialSpan.textContent = `[${currentTranscriptionState.partial}]`;
+    currentDiv.appendChild(partialSpan);
 
     container.appendChild(currentDiv);
   }

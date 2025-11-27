@@ -4,6 +4,7 @@ let state = {
     modules: [],
     activeModuleId: null,
     modelStatuses: {},
+    isModelLoaded: false,
   },
   workbench: {
     input: {
@@ -13,7 +14,6 @@ let state = {
     output: {
       text: "",
       partialText: "",
-      realtimeText: "",
     },
     runtimeConfigs: {},
     isProcessing: false,
@@ -39,6 +39,10 @@ export function setModelStatuses(statuses) {
   state.models.modelStatuses = statuses;
 }
 
+export function setModelLoaded(isLoaded) {
+  state.models.isModelLoaded = isLoaded;
+}
+
 export function setAudioStream(stream) {
   state.workbench.input.audioStream = stream;
 }
@@ -53,10 +57,6 @@ export function setOutputText(text) {
 
 export function setPartialText(text) {
   state.workbench.output.partialText = text;
-}
-
-export function setRealtimeText(text) {
-  state.workbench.output.realtimeText = text;
 }
 
 export function setRuntimeConfigs(configs) {
