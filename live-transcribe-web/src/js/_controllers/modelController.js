@@ -16,7 +16,7 @@ export function initWorker() {
   );
 
   inferenceWorker.onmessage = (e) => {
-    const { type, data, text } = e.data;
+    const { type, data, text, level, progress, file } = e.data;
     if (type === "result") {
       const duration = Date.now() - state.workbench.inferenceStartTime;
       setInferenceDuration(duration);
@@ -27,6 +27,15 @@ export function initWorker() {
     } else if (type === "status") {
       const statusEl = dom.statusText();
       if (statusEl) statusEl.textContent = `Status: ${data || text}`;
+    } else if (type === "load_progress") {
+      const statusEl = dom.statusText();
+      if (statusEl) {
+        const levelText = level ? `[L${level}] ` : "";
+        const fileName = file ? file.split("/").pop() : "model";
+        statusEl.textContent = `${levelText}Loading: ${fileName} - ${Math.round(
+          progress * 100
+        )}%`;
+      }
     } else if (type === "transcription") {
       // Handle transcription updates through event bus
       eventBus.emit("transcription_update", data);

@@ -4,6 +4,7 @@ export class Transcriber {
     this.workers = [];
     this.workerConfigs = {}; // Store configs for restarting workers
     this.segments = []; // { start, end, text, level }
+    this.replacedSegments = []; // Store segments that were replaced for diff comparison
     this.currentPartial = "";
     this.isInitialized = false;
     this.enabledLayers = [1, 2, 3, 4]; // Default all enabled
@@ -26,6 +27,9 @@ export class Transcriber {
         count: 0,
         lastTime: 0,
         averageTime: 0,
+        totalTokens: 0,
+        lastTokens: 0,
+        averageTokens: 0,
       };
     });
   }
@@ -35,7 +39,8 @@ export class Transcriber {
     backend,
     model,
     enabledLayers = [1, 2, 3, 4],
-    quant = null
+    quant = null,
+    useOnnx = false
   ) {
     if (this.isInitialized) return;
 
@@ -99,16 +104,22 @@ export class Transcriber {
     const enabledCount = configs.length;
     this.onMessage({
       type: "status",
-      text: `Initializing ${enabledCount}-Worker Swarm...`,
+      text: `Initializing ${enabledCount}-Worker Swarm (${
+        useOnnx ? "ONNX" : "Default"
+      })...`,
     });
 
     const initPromises = configs.map(async (config) => {
-      const worker = new Worker(
-        new URL("./workers/inference.worker.js", import.meta.url),
-        { type: "module" }
-      );
+      const workerUrl = useOnnx
+        ? "./workers/onnx-inference.worker.js"
+        : "./workers/inference.worker.js";
+
+      const worker = new Worker(new URL(workerUrl, import.meta.url), {
+        type: "module",
+      });
 
       worker.level = config.level; // Store level for timing tracking
+      worker.useOnnx = useOnnx; // Store type for restart
 
       // Store configuration for potential restart
       const workerConfig = {
@@ -117,6 +128,7 @@ export class Transcriber {
         backend: backend || "webgpu",
         model,
         quant,
+        useOnnx,
       };
       this.workerConfigs[config.level] = workerConfig;
 
@@ -172,6 +184,22 @@ export class Transcriber {
         stats.count += 1;
         stats.lastTime = data.inferenceTime;
         stats.averageTime = stats.totalTime / stats.count;
+
+        // Track token counts if available
+        if (data.tokens !== undefined) {
+          let tokenCount = 0;
+          if (Array.isArray(data.tokens)) {
+            tokenCount = data.tokens.length;
+          } else if (typeof data.tokens === "number") {
+            tokenCount = data.tokens;
+          }
+
+          if (tokenCount > 0) {
+            stats.totalTokens += tokenCount;
+            stats.lastTokens = tokenCount;
+            stats.averageTokens = stats.totalTokens / stats.count;
+          }
+        }
       }
 
       // Update speculative decoding stats if available
@@ -238,6 +266,22 @@ export class Transcriber {
           stats.count += 1;
           stats.lastTime = data.inferenceTime;
           stats.averageTime = stats.totalTime / stats.count;
+
+          // Track token counts for L1 partials
+          if (data.tokens !== undefined) {
+            let tokenCount = 0;
+            if (Array.isArray(data.tokens)) {
+              tokenCount = data.tokens.length;
+            } else if (typeof data.tokens === "number") {
+              tokenCount = data.tokens;
+            }
+
+            if (tokenCount > 0) {
+              stats.totalTokens += tokenCount;
+              stats.lastTokens = tokenCount;
+              stats.averageTokens = stats.totalTokens / stats.count;
+            }
+          }
         }
 
         // Store tokens from L1 partials (Phase 2)
@@ -301,12 +345,17 @@ export class Transcriber {
 
     try {
       // Create new worker with same configuration
-      const worker = new Worker(
-        new URL("./workers/inference.worker.js", import.meta.url),
-        { type: "module" }
-      );
+      const workerUrl = config.useOnnx
+        ? "./workers/onnx-inference.worker.js"
+        : "./workers/inference.worker.js";
+
+      const worker = new Worker(new URL(workerUrl, import.meta.url), {
+        type: "module",
+      });
 
       worker.level = level;
+      worker.useOnnx = config.useOnnx;
+
       worker.onmessage = (e) => this.handleWorkerMessage(e.data, worker);
       worker.onerror = (error) => this.handleWorkerError(error, worker);
 
@@ -343,6 +392,8 @@ export class Transcriber {
     // If L4 produces [0-20], it overlaps L2[0-5], L2[5-10], L2[10-15], L2[15-20].
     // L4 (Level 4) > L2 (Level 2). L4 wins.
 
+    const replacedSegments = [];
+
     this.segments = this.segments.filter((s) => {
       // Skip separators in overlap filtering - they should always be preserved
       if (s.isSeparator) {
@@ -366,12 +417,25 @@ export class Transcriber {
           // No, we should NOT push newSegment if we have a better one.
           return true;
         } else {
-          // Existing is weaker. Drop it.
+          // Existing is weaker. Drop it. Store for diff comparison.
+          replacedSegments.push(s);
           return false;
         }
       }
       return true; // No overlap, keep.
     });
+
+    // Store replaced segments for diff comparison (only if new segment is L4)
+    if (newSegment.level === 4) {
+      this.replacedSegments.push({
+        l4Segment: newSegment,
+        replaced: replacedSegments,
+      });
+      // Keep only the last few replacements to avoid memory issues
+      if (this.replacedSegments.length > 10) {
+        this.replacedSegments.shift();
+      }
+    }
 
     // Check if we should add the new segment
     // If we found a conflict where existing was better, we should NOT add newSegment.
@@ -402,6 +466,7 @@ export class Transcriber {
       segments: this.segments,
       partial: this.currentPartial,
       timingStats: this.timingStats,
+      replacedSegments: this.replacedSegments, // For diff comparison
     });
   }
 
@@ -434,12 +499,13 @@ export class Transcriber {
     backend,
     model,
     enabledLayers = [1, 2, 3, 4],
-    quant = null
+    quant = null,
+    useOnnx = false
   ) {
     // If already loaded, no need to reload
     if (this.isInitialized) return;
 
-    return this.init(language, backend, model, enabledLayers, quant);
+    return this.init(language, backend, model, enabledLayers, quant, useOnnx);
   }
 
   async unloadModel() {

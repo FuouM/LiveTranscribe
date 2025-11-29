@@ -1,0 +1,169 @@
+<div id="workbench-container">
+    <div id="audio-input-section">
+        <h3>Audio Input</h3>
+        <div id="audio-controls">
+            <button id="start-btn" class="btn btn-primary">Start Recording</button>
+            <button id="stop-btn" class="btn btn-secondary" disabled>Stop</button>
+        </div>
+        <div class="audio-visualizer">
+            <div id="visualizer"></div>
+        </div>
+        <div id="streaming-section" style="display: none;">
+            <div class="transcription-header">
+                <h3>Layer 0: Streaming Output</h3>
+                <div class="streaming-stats">
+                    <span id="streaming-tokens">0 tokens</span> |
+                    <span id="streaming-tps">0 TPS</span>
+                </div>
+            </div>
+            <div id="streaming-container" class="streaming-container">
+                <div class="token-display" id="token-display">
+                    <!-- Last 20 tokens will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="transcription-section">
+        <div class="transcription-header">
+            <h3>
+                <span class="header-text">Transcription</span>
+                <button id="diff-view-toggle" class="btn btn-secondary diff-toggle-btn inline-header-btn"
+                    title="Show layered diff highlighting for latest L4 segments">
+                    +/- L4
+                </button>
+            </h3>
+            <button id="copy-l4-btn" class="btn btn-secondary copy-btn" title="Copy L4 transcription only">
+                <span class="clipboard-icon"></span> L4
+            </button>
+        </div>
+        <div id="transcript-container" class="transcript-container"></div>
+    </div>
+
+    <div id="controls-section" class="toolbox-container">
+        <div class="toolbox-header">Settings</div>
+
+        <div class="controls-grid">
+            <!-- Row 1 -->
+            <div class="control-item">
+                <label>Model</label>
+                <select id="model-select">
+                    <option value="Xenova/whisper-tiny">Tiny</option>
+                    <option value="Xenova/whisper-base">Base</option>
+                    <option value="Xenova/whisper-small">Small</option>
+                    <option value="Xenova/whisper-medium">Medium</option>
+                    <option value="Xenova/whisper-large-v3">Large v3</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Lang</label>
+                <select id="language-select">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="ja">Japanese</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Quant</label>
+                <select id="quant-select">
+                    <option value="q4">Q4 Fast</option>
+                    <option value="fp16">FP16 High</option>
+                </select>
+            </div>
+
+            <div class="control-item">
+                <label>Backend</label>
+                <select id="backend-select">
+                    <option value="webgpu">WebGPU</option>
+                    <option value="wasm">WASM</option>
+                </select>
+            </div>
+
+            <!-- Model Control Buttons -->
+            <div class="control-item">
+                <label>Action</label>
+                <div style="display:flex; gap:4px;">
+                    <button id="load-model-btn" class="btn" style="flex:1; padding: 0 8px;">Load</button>
+                    <button id="unload-model-btn" class="btn" style="flex:1; padding: 0 8px;" disabled>Unload</button>
+                </div>
+            </div>
+
+            <!-- Layer Toggles (Full Width) -->
+            <div class="layer-control-group">
+                <label class="layer-group-label">Active Layers</label>
+                <div class="layer-grid">
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="layer-l0-toggle">
+                        <div class="layer-label">L0</div>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="layer-l1-toggle">
+                        <div class="layer-label">L1</div>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="layer-l2-toggle">
+                        <div class="layer-label">L2</div>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="layer-l3-toggle">
+                        <div class="layer-label">L3</div>
+                    </div>
+                    <div class="layer-toggle">
+                        <input type="checkbox" id="layer-l4-toggle">
+                        <div class="layer-label">L4</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONNX Toggle -->
+        <div class="control-item" style="margin-top: 10px;">
+            <button id="onnx-layers-toggle" class="btn btn-secondary onnx-toggle-btn">Use ONNX for L1-4 (overrides model
+                settings)</button>
+        </div>
+
+    </div>
+
+    <div id="status-section">
+        <div class="status-row">
+            <div id="status-text">Ready</div>
+            <div id="recording-timer" class="recording-timer">00:00:00</div>
+        </div>
+        <div class="timing-stats">
+            <div class="timing-header">
+                <span>Layer Performance</span>
+                <button id="timing-display-toggle" class="btn btn-secondary timing-toggle-btn"
+                    title="Toggle between time and tokens/second display">
+                    Time
+                </button>
+            </div>
+            <div class="timing-legend">
+                <div class="legend-item"><span class="legend-color level-1"></span>L1: Fast (continuous)</div>
+                <div class="legend-item"><span class="legend-color level-2"></span>L2: 5s chunks</div>
+                <div class="legend-item"><span class="legend-color level-3"></span>L3: 10s chunks</div>
+                <div class="legend-item"><span class="legend-color level-4"></span>L4: 20s chunks (ground truth)</div>
+            </div>
+            <div class="timing-grid">
+                <div class="timing-item level-1">
+                    <div class="label">L1 Fast</div>
+                    <div class="value" id="timing-l1">-</div>
+                </div>
+                <div class="timing-item level-2">
+                    <div class="label">L2 5s</div>
+                    <div class="value" id="timing-l2">-</div>
+                </div>
+                <div class="timing-item level-3">
+                    <div class="label">L3 10s</div>
+                    <div class="value" id="timing-l3">-</div>
+                </div>
+                <div class="timing-item level-4">
+                    <div class="label">L4 20s</div>
+                    <div class="value" id="timing-l4">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
